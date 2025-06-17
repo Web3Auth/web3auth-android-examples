@@ -2,7 +2,6 @@
 package com.sbz.web3authdemoapp
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -12,10 +11,12 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 // IMP START - Quick Start
 import com.web3auth.core.Web3Auth
 // IMP END - Quick Start
 import com.web3auth.core.types.*
+import org.torusresearch.fetchnodedetails.types.Web3AuthNetwork
 import org.web3j.crypto.Credentials
 import org.web3j.crypto.Hash
 import org.web3j.crypto.RawTransaction
@@ -33,7 +34,6 @@ import org.web3j.utils.Numeric
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
-import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity() {
@@ -54,9 +54,8 @@ class MainActivity : AppCompatActivity() {
         web3Auth = Web3Auth(
             Web3AuthOptions(
                 clientId = getString(R.string.web3auth_project_id),
-                network = Network.SAPPHIRE_MAINNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
-                buildEnv = BuildEnv.PRODUCTION,
-                redirectUrl = Uri.parse("com.sbz.web3authdemoapp://auth")
+                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
+                redirectUrl = "com.sbz.web3authdemoapp://auth"
             ), this
         )
         // IMP END - Initialize Web3Auth
@@ -68,10 +67,10 @@ class MainActivity : AppCompatActivity() {
         sessionResponse.whenComplete { _, error ->
             if (error == null) {
                 reRender()
-                println("PrivKey: " + web3Auth.getPrivkey())
-                println("ed25519PrivKey: " + web3Auth.getEd25519PrivKey())
+                println("PrivKey: " + web3Auth.getPrivateKey())
+                println("ed25519PrivKey: " + web3Auth.getEd25519PrivateKey())
                 println("Web3Auth UserInfo" + web3Auth.getUserInfo())
-                credentials = Credentials.create(web3Auth.getPrivkey())
+                credentials = Credentials.create(web3Auth.getPrivateKey())
                 web3 = Web3j.build(HttpService(rpcUrl))
             } else {
                 Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
@@ -90,7 +89,23 @@ class MainActivity : AppCompatActivity() {
         signOutButton.visibility = View.GONE
 
         val getAddressButton = findViewById<Button>(R.id.getAddress)
-        getAddressButton.setOnClickListener { getAddress() }
+        getAddressButton.setOnClickListener {
+            val credentials = Credentials.create(web3Auth.getPrivateKey())
+            val params = JsonArray().apply {
+                // Message to be signed
+                add("Hello, World!")
+                // User's EOA address
+                add(credentials.address)
+            }
+            Log.i("Is MFA Enabled", web3Auth.getUserInfo()?.isMfaEnabled.toString())
+            try {
+                val enableMFACF = web3Auth.showWalletUI()
+                val isSuccess = enableMFACF.get()
+                Log.i("Is Success", isSuccess.toString())
+            } catch (e: Exception) {
+                Log.e("MFA ERROR", e.toString())
+            }
+        }
         getAddressButton.visibility = View.GONE
 
         val getBalanceButton = findViewById<Button>(R.id.getBalance)
@@ -125,17 +140,18 @@ class MainActivity : AppCompatActivity() {
     private fun signIn() {
         val email = emailInput.text.toString()
         // IMP START - Login
-        val selectedLoginProvider = Provider.EMAIL_PASSWORDLESS   // Can be GOOGLE, FACEBOOK, TWITCH etc.
-        val loginParams = LoginParams(selectedLoginProvider, extraLoginOptions = ExtraLoginOptions(login_hint = email))
+        val authConnection = AuthConnection.EMAIL_PASSWORDLESS   // Can be GOOGLE, FACEBOOK, TWITCH etc.
+        val loginParams = LoginParams(authConnection, extraLoginOptions = ExtraLoginOptions(login_hint = email, flow_type = EmailFlowType.code))
+//        val loginParams = LoginParams(authConnection)
         val loginCompletableFuture: CompletableFuture<Web3AuthResponse> =
-            web3Auth.login(loginParams)
+            web3Auth.connectTo(loginParams)
         // IMP END - Login
 
         loginCompletableFuture.whenComplete { _, error ->
             if (error == null) {
                 // Set the sessionId from Web3Auth in App State
                 // This will be used when making blockchain calls with Web3j
-                credentials = Credentials.create(web3Auth.getPrivkey())
+                credentials = Credentials.create(web3Auth.getPrivateKey())
                 web3 = Web3j.build(HttpService(rpcUrl))
                 reRender()
             } else {
@@ -176,7 +192,7 @@ class MainActivity : AppCompatActivity() {
         var key: String? = null
         var userInfo: UserInfo? = null
         try {
-            key = web3Auth.getPrivkey()
+            key = web3Auth.getPrivateKey()
             // IMP START - Get User Info
             userInfo = web3Auth.getUserInfo()
             // IMP END - Get User Info
