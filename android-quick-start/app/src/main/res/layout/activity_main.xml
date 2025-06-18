@@ -68,6 +68,12 @@
             android:text="@string/balance" />
 
         <Button
+            android:id="@+id/enableMFA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="EnableMFA" />
+
+        <Button
             android:id="@+id/getTransaction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

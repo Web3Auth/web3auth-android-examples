@@ -1,6 +1,8 @@
 
 package com.sbz.web3authdemoapp
 
+// IMP START - Quick Start
+// IMP END - Quick Start
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -12,10 +14,14 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
 import com.google.gson.JsonArray
-// IMP START - Quick Start
 import com.web3auth.core.Web3Auth
-// IMP END - Quick Start
-import com.web3auth.core.types.*
+import com.web3auth.core.types.AuthConnection
+import com.web3auth.core.types.EmailFlowType
+import com.web3auth.core.types.ExtraLoginOptions
+import com.web3auth.core.types.LoginParams
+import com.web3auth.core.types.UserInfo
+import com.web3auth.core.types.Web3AuthOptions
+import com.web3auth.core.types.Web3AuthResponse
 import org.torusresearch.fetchnodedetails.types.Web3AuthNetwork
 import org.web3j.crypto.Credentials
 import org.web3j.crypto.Hash
@@ -108,6 +114,18 @@ class MainActivity : AppCompatActivity() {
         }
         getAddressButton.visibility = View.GONE
 
+        val enableMFABtn = findViewById<Button>(R.id.enableMFA)
+        enableMFABtn.setOnClickListener {
+            val enableMfaCf = web3Auth.enableMFA()
+            enableMfaCf.whenComplete { _, error ->
+                if (error == null) {
+                    Log.d("MainActivity_Web3Auth", "MFA setup successfully")
+                } else {
+                    Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
+                }
+            }
+        }
+
         val getBalanceButton = findViewById<Button>(R.id.getBalance)
         getBalanceButton.setOnClickListener { getBalance() }
         getBalanceButton.visibility = View.GONE
@@ -119,6 +137,8 @@ class MainActivity : AppCompatActivity() {
         val getTransactionButton = findViewById<Button>(R.id.getTransaction)
         getTransactionButton.setOnClickListener { sendTransaction(0.001, "0xeaA8Af602b2eDE45922818AE5f9f7FdE50cFa1A8") }
         getTransactionButton.visibility = View.GONE
+
+
     }
 
     override fun onNewIntent(intent: Intent?) {
