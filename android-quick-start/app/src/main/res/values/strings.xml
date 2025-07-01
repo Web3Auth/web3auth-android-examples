@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Web3Auth Android QuickStart App</string>
     <!-- // IMP START - Get your Web3Auth Client ID from Dashboard -->
-    <string name="web3auth_project_id">BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8zMsfxIKMjiqNQ</string>
+    <string name="web3auth_project_id">BJFT2n2Nc-2HY9yJCacDygMvuJQc8do8bF7GMWig2KiZgJJ5ks-Hiw_JvcJvqiJ5yYTkRptfwoeQFkqJZAG65do</string>
     <!-- // IMP END - Get your Web3Auth Client ID from Dashboard -->
     <string name="web3auth_android_demo">Web3Auth Android Example Demo</string>
     <string name="login_with_google">Login</string>

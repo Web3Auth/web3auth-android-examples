@@ -14,6 +14,7 @@ import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 import com.web3auth.core.Web3Auth
 import com.web3auth.core.types.*
 import org.torusresearch.fetchnodedetails.types.Web3AuthNetwork
@@ -207,8 +208,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun launchWalletServices() {
+        val params = JsonArray().apply {
+            // Message to be signed
+            add("Hello, World!")
+            // User's EOA address
+            add(credentials.address)
+        }
 
-        val completableFuture = web3Auth.showWalletUI()
+
+        val completableFuture = web3Auth.request("personal_sign", params)
 
         completableFuture.whenComplete{_, error ->
             if(error == null) {

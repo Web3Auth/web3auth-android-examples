@@ -54,8 +54,9 @@ class MainActivity : AppCompatActivity() {
         web3Auth = Web3Auth(
             Web3AuthOptions(
                 clientId = getString(R.string.web3auth_project_id),
-                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
-                redirectUrl = "com.sbz.web3authdemoapp://auth"
+                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_DEVNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
+                redirectUrl = "com.sbz.web3authdemoapp://auth",
+                defaultChainId = "0xaa36a7"
             ), this
         )
         // IMP END - Initialize Web3Auth
@@ -100,7 +101,13 @@ class MainActivity : AppCompatActivity() {
             Log.i("Is MFA Enabled", web3Auth.getUserInfo()?.isMfaEnabled.toString())
             try {
                 val enableMFACF = web3Auth.showWalletUI()
-                val isSuccess = enableMFACF.get()
+                val isSuccess = enableMFACF.whenComplete{ result, _ ->
+//                    if(result.result != null) {
+//                        Log.i("Result", result.result.toString())
+//                    } else {
+//                        Log.i("Error", result.error.toString())
+//                    }
+                }
                 Log.i("Is Success", isSuccess.toString())
             } catch (e: Exception) {
                 Log.e("MFA ERROR", e.toString())
