@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Web3Auth Android Aggregate Verifier Example</string>
-    <string name="web3auth_project_id">BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8zMsfxIKMjiqNQ</string>
+    <string name="web3auth_project_id">BJFT2n2Nc-2HY9yJCacDygMvuJQc8do8bF7GMWig2KiZgJJ5ks-Hiw_JvcJvqiJ5yYTkRptfwoeQFkqJZAG65do</string>
     <string name="web3auth_auth0_client_id">QiEf8qZ9IoasbZsbHvjKZku4LdnRC1Ct</string>
     <string name="web3auth_google_client_id">519228911939-cri01h55lsjbsia1k7ll6qpalrus75ps.apps.googleusercontent.com</string>
     <string name="web3auth_android_demo">Web3Auth Android Aggregate Verifier Demo</string>

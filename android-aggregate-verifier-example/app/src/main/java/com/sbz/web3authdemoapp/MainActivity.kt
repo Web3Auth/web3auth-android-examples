@@ -48,8 +48,8 @@ class MainActivity : AppCompatActivity() {
         val authConnectionConfig =  ArrayList<AuthConnectionConfig>()
         authConnectionConfig.add(
             AuthConnectionConfig(
-                authConnectionId = "w3a-google",
-                groupedAuthConnectionId = "aggregate-sapphire",
+                authConnectionId = "w3a-google-mobile",
+                groupedAuthConnectionId = "aggregate-mobile",
                 authConnection = AuthConnection.GOOGLE,
                 clientId = getString(R.string.web3auth_google_client_id),
             )
@@ -57,8 +57,8 @@ class MainActivity : AppCompatActivity() {
 
         authConnectionConfig.add(
             AuthConnectionConfig(
-                authConnectionId = "w3a-a0-email-passwordless",
-                groupedAuthConnectionId = "aggregate-sapphire",
+                authConnectionId = "w3a-a0-email-passwordless-mobile",
+                groupedAuthConnectionId = "aggregate-mobile",
                 authConnection = AuthConnection.CUSTOM,
                 clientId = getString(R.string.web3auth_auth0_client_id),
             )
@@ -67,10 +67,10 @@ class MainActivity : AppCompatActivity() {
         web3Auth = Web3Auth(
            Web3AuthOptions(
                clientId = getString(R.string.web3auth_project_id), // pass over your Web3Auth Client ID from Developer Dashboard
-               web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
-               authBuildEnv = BuildEnv.PRODUCTION,
+               web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_DEVNET, // pass over the network you want to use (MAINNET or TESTNET or CYAN, AQUA, SAPPHIRE_MAINNET or SAPPHIRE_TESTNET)
+               authBuildEnv = BuildEnv.TESTING,
                redirectUrl = "com.sbz.web3authdemoapp://auth", // your app's redirect URL
-               authConnectionConfig = ArrayList<AuthConnectionConfig>()
+//               authConnectionConfig = authConnectionConfig
            ), context = this
 
         )
@@ -151,12 +151,10 @@ class MainActivity : AppCompatActivity() {
         val loginCompletableFuture: CompletableFuture<Web3AuthResponse> = web3Auth.connectTo(
             LoginParams(
                 selectedLoginProvider,
-                authConnectionId = "w3a-a0-email-passwordless",
-                groupedAuthConnectionId = "aggregate-sapphire",
+                authConnectionId = "w3a-a0-email-passwordless-mobile",
+                groupedAuthConnectionId = "aggregate-mobile",
                 extraLoginOptions = ExtraLoginOptions(
-                    domain = "https://web3auth.au.auth0.com",
-                    userIdField = "email",
-                    isUserIdCaseSensitive = false
+                    domain = "https://web3auth.au.auth0.com"
                 )
             )
         )
@@ -174,7 +172,7 @@ class MainActivity : AppCompatActivity() {
     private fun signInGoogle() {
         val selectedLoginProvider = AuthConnection.GOOGLE
         val loginCompletableFuture: CompletableFuture<Web3AuthResponse> =
-            web3Auth.connectTo(LoginParams(selectedLoginProvider, authConnectionId = "w3a-google", groupedAuthConnectionId = "aggregate-sapphire"))
+            web3Auth.connectTo(LoginParams(selectedLoginProvider, authConnectionId = "w3a-google-mobile", groupedAuthConnectionId = "aggregate-mobile"))
 
         loginCompletableFuture.whenComplete { _, error ->
             if (error == null) {
@@ -188,7 +186,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun enableMFA() {
         val loginParams = prepareLoginParams()
-        val completableFuture = web3Auth.enableMFA(loginParams)
+        val completableFuture = web3Auth.enableMFA()
         completableFuture.whenComplete{_, error ->
             if (error == null) {
                 Log.d("MainActivity_Web3Auth", "Launched successfully")
@@ -202,13 +200,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun prepareLoginParams(): LoginParams {
         val loginParams = if(web3Auth.getUserInfo()!!.authConnection == AuthConnection.GOOGLE.name) {
-            LoginParams(AuthConnection.GOOGLE)
+            LoginParams(AuthConnection.GOOGLE, authConnectionId = "w3a-google-mobile", groupedAuthConnectionId = "aggregate-mobile")
         } else {
             LoginParams(
                 AuthConnection.CUSTOM,
+                authConnectionId = "w3a-a0-email-passwordless-mobile",
+                groupedAuthConnectionId = "aggregate-mobile",
                 extraLoginOptions = ExtraLoginOptions(
                     domain = "https://web3auth.au.auth0.com",
-                    userIdField = "email",
                     isUserIdCaseSensitive = false
                 )
             )
