@@ -1,179 +1,146 @@
-# Web3Auth Android Firebase Example
+# MetaMask Embedded Wallets — Android Firebase Example
 
-This example demonstrates how to integrate Web3Auth with Firebase authentication in an Android application. It showcases a custom authentication setup using Firebase as the authentication provider with Web3Auth's blockchain functionality.
+Android example demonstrating custom authentication with Firebase using [MetaMask Embedded Wallets](https://docs.metamask.io/embedded-wallets/) (formerly Web3Auth Plug and Play). Firebase authenticates the user, then the Firebase ID token is passed directly to Web3Auth to derive the user's EVM wallet.
 
-## 📝 Features
-- Firebase Authentication integration (Google, Email/Password, Phone)
-- Custom authentication flow
-- Ethereum wallet creation and management
-- Basic blockchain interactions
-- Secure key management
-- Material Design UI components
-- Android 6.0+ (API 23+) support
+## Features
 
-## 🚀 Getting Started
+- Firebase Email/Password authentication
+- Custom JWT flow: Firebase ID token → Web3Auth wallet derivation
+- EVM wallet creation and management
+- Get wallet address, Sepolia balance, sign messages, and send transactions
+- Session persistence across app restarts
 
-### Prerequisites
-- Android Studio Arctic Fox (2020.3.1) or higher
-- Android SDK version 23 or higher
-- Gradle 7.0.2 or higher
-- JDK 11 or higher
-- [Firebase Account](https://firebase.google.com)
-- [Web3Auth Dashboard](https://dashboard.web3auth.io) account
-- Basic understanding of Android development and Web3
+## Requirements
 
-### Installation
+- Android Studio Hedgehog (2023.1.1) or later
+- Android API 24+, Compile SDK 34
+- JDK 17+
+- [Firebase account](https://firebase.google.com) with a project configured
+- [MetaMask Embedded Wallets Dashboard](https://dashboard.web3auth.io) account
 
-1. Clone the repository:
+## Setup
+
+### 1. Clone the repository
+
 ```bash
-git clone https://github.com/Web3Auth/web3auth-mobile-examples.git
-cd web3auth-mobile-examples/android/android-firebase-example
+git clone https://github.com/Web3Auth/web3auth-android-examples.git
+cd web3auth-android-examples/android-firebase-example
 ```
 
-2. Open the project in Android Studio:
-   - Launch Android Studio
-   - Select "Open an existing Android Studio project"
-   - Navigate to the project directory
-   - Click "OK"
+### 2. Configure Firebase
 
-### Configuration
+1. Create an Android app in [Firebase Console](https://console.firebase.google.com).
+2. Enable **Email/Password** sign-in under Authentication → Sign-in methods.
+3. Download `google-services.json` and place it in the `app/` directory.
+4. Add the SHA-1 fingerprint of your debug keystore in Firebase Console (Project Settings → Your App).
 
-1. Firebase Setup:
-   - Create a new project in [Firebase Console](https://console.firebase.google.com)
-   - Add an Android app to your project
-   - Download and add the `google-services.json` file to the app directory
-   - Enable Authentication methods you want to use (Google, Email/Password, etc.)
-   - Set up Firebase Cloud Functions for authentication (if using custom tokens)
+### 3. Configure the Web3Auth Dashboard
 
-2. Web3Auth Setup:
-   - Get your Client ID from [Web3Auth Dashboard](https://dashboard.web3auth.io)
-   - Create a custom verifier with Firebase configuration
-   - Update configuration in `app/src/main/res/values/strings.xml`:
-   ```xml
-   <string name="web3auth_client_id">YOUR-WEB3AUTH-CLIENT-ID</string>
-   <string name="web3auth_verifier">YOUR-VERIFIER-NAME</string>
-   ```
+1. Create a project on the [Embedded Wallets Dashboard](https://dashboard.web3auth.io).
+2. Go to **Authentication** → create a custom connection with:
+   - **Type**: Firebase
+   - **JWKS Endpoint**: `https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com`
+   - **User ID field**: `sub`
+   - **JWT Validation**: `aud` field equals your Firebase project ID
+3. Note your **Auth Connection ID** (verifier name). This example uses `w3a-firebase-demo`.
+4. Allowlist your redirect URI: `com.sbz.web3authdemoapp://auth`
 
-3. Run the application:
-   - Select your target device/emulator
-   - Click the "Run" button (▶️) or press Shift + F10
+### 4. Set credentials in strings.xml
 
-## 💡 Implementation Details
-
-### Project Structure
-```
-app/
-├── src/
-│   ├── main/
-│   │   ├── java/com/web3auth/firebase/example/
-│   │   │   ├── MainActivity.kt           # Main activity
-│   │   │   ├── FirebaseAuthService.kt    # Firebase authentication
-│   │   │   ├── Web3AuthService.kt        # Web3Auth integration
-│   │   │   └── BlockchainService.kt      # Blockchain operations
-│   │   ├── res/
-│   │   │   ├── layout/                   # UI layouts
-│   │   │   └── values/                   # Resource values
-│   │   └── AndroidManifest.xml
-│   └── build.gradle                      # App level build config
-└── build.gradle                          # Project level build config
+```xml
+<string name="web3auth_project_id">YOUR_WEB3AUTH_CLIENT_ID</string>
 ```
 
-### Core Features Implementation
+### 5. Open in Android Studio and run
 
-1. **Firebase Configuration**
+## How It Works
+
+### Initialize Web3Auth with Firebase connection config
+
 ```kotlin
-// Initialize Firebase
-FirebaseApp.initializeApp(this)
-val auth = FirebaseAuth.getInstance()
-```
-
-2. **Web3Auth with Firebase**
-```kotlin
-// Initialize Web3Auth
-val web3Auth = Web3Auth(
-    context = this,
-    clientId = getString(R.string.web3auth_client_id),
-    network = Web3Auth.Network.TESTNET,
-    redirectUrl = Uri.parse("YOUR-APP-SCHEME://auth")
+web3Auth = Web3Auth(
+    Web3AuthOptions(
+        clientId = getString(R.string.web3auth_project_id),
+        web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET,
+        redirectUrl = "com.sbz.web3authdemoapp://auth",
+        authConnectionConfig = listOf(
+            AuthConnectionConfig(
+                authConnection = AuthConnection.CUSTOM,
+                authConnectionId = "w3a-firebase-demo", // your Auth Connection ID from dashboard
+                clientId = getString(R.string.web3auth_project_id)
+            )
+        )
+    ), this
 )
 
-// Login with Firebase
-private fun loginWithFirebase() {
-    // Configure Firebase Auth UI
-    startActivityForResult(
-        AuthUI.getInstance()
-            .createSignInIntentBuilder()
-            .setAvailableProviders(providers)
-            .build(),
-        RC_SIGN_IN
-    )
-}
+web3Auth.setResultUrl(intent?.data)
 
-// Handle Firebase result
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode == RC_SIGN_IN) {
-        // Get Firebase user
-        val user = FirebaseAuth.getInstance().currentUser
-        
-        // Get ID token
-        user?.getIdToken(true)?.addOnSuccessListener { result ->
-            val idToken = result.token
-            
-            // Connect to Web3Auth
-            web3Auth.login(LoginParams().apply {
-                this.loginType = LoginType.JWT
-                this.jwtParams = JwtParams().apply {
-                    this.verifier = getString(R.string.web3auth_verifier)
-                    this.idToken = idToken
-                }
-            }, ::handleLoginResult)
-        }
+val sessionResponse: CompletableFuture<Void> = web3Auth.initialize()
+sessionResponse.whenComplete { _, error ->
+    if (error == null) {
+        val credentials = Credentials.create(web3Auth.getPrivateKey())
     }
 }
 ```
 
-## 🔒 Security Considerations
+### Firebase sign-in → Web3Auth wallet
 
-- Secure storage of Firebase credentials
-- JWT token handling
-- Private key management
-- Firebase security rules best practices
-- Secure network communications
+```kotlin
+// 1. Sign in with Firebase
+Firebase.auth.signInWithEmailAndPassword(email, password)
+    .addOnCompleteListener { task ->
+        if (task.isSuccessful) {
+            // 2. Get the Firebase ID token (must be fresh — max 60s old)
+            Firebase.auth.currentUser?.getIdToken(true)
+                ?.addOnSuccessListener { result ->
+                    val idToken = result.token ?: return@addOnSuccessListener
 
-## 🛠️ Troubleshooting
+                    // 3. Pass the ID token directly to Web3Auth
+                    val loginFuture: CompletableFuture<Web3AuthResponse> =
+                        web3Auth.connectTo(
+                            LoginParams(
+                                authConnection = AuthConnection.CUSTOM,
+                                authConnectionId = "w3a-firebase-demo",
+                                idToken = idToken
+                            )
+                        )
 
-### Common Issues
+                    loginFuture.whenComplete { _, error ->
+                        if (error == null) {
+                            val credentials = Credentials.create(web3Auth.getPrivateKey())
+                        }
+                    }
+                }
+        }
+    }
+```
 
-1. **Firebase Configuration**
-   - Verify `google-services.json` is correctly placed
-   - Check Firebase project settings
-   - Validate authentication methods are enabled
+### Handle deep link callbacks
 
-2. **Web3Auth Integration**
-   - Verify custom verifier setup
-   - Check JWT token handling
-   - Debug authentication flow
+```kotlin
+override fun onNewIntent(intent: Intent?) {
+    super.onNewIntent(intent)
+    web3Auth.setResultUrl(intent?.data)
+}
 
-3. **Android-Specific Issues**
-   - Check manifest permissions
-   - Verify SHA-1 fingerprint configuration
-   - Debug intent resolution
+override fun onResume() {
+    super.onResume()
+    if (Web3Auth.getCustomTabsClosed()) {
+        web3Auth.setResultUrl(null)
+        Web3Auth.setCustomTabsClosed(false)
+    }
+}
+```
 
-## 📚 Resources
+## Resources
 
-- [Web3Auth Documentation](https://web3auth.io/docs)
-- [Android SDK Reference](https://web3auth.io/docs/sdk/pnp/android)
-- [Firebase Android Guide](https://firebase.google.com/docs/android/setup)
-- [Custom Authentication Setup](https://web3auth.io/docs/guides/custom-authentication)
-- [Firebase Setup Guide](https://web3auth.io/docs/guides/firebase)
+- [Android SDK Documentation](https://docs.metamask.io/embedded-wallets/sdk/android/)
+- [Custom Authentication Guide](https://docs.metamask.io/embedded-wallets/sdk/android/advanced/custom-authentication/)
+- [Firebase Android Setup](https://firebase.google.com/docs/android/setup)
+- [MetaMask Embedded Wallets Docs](https://docs.metamask.io/embedded-wallets/)
+- [Dashboard](https://dashboard.web3auth.io)
+- [Builder Hub Community](https://builder.metamask.io/c/embedded-wallets/5)
 
-## 🤝 Support
+## License
 
-- [Discord](https://discord.gg/web3auth)
-- [GitHub Issues](https://github.com/Web3Auth/web3auth-mobile-examples/issues)
-- [Web3Auth Support](https://web3auth.io/docs/troubleshooting/support)
-
-## 📄 License
-
-This example is available under the MIT License. See the [LICENSE](../../LICENSE) file for more info.
+MIT — see [LICENSE](../LICENSE) for details.

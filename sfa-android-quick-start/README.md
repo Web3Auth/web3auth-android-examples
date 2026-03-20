@@ -1,32 +1,24 @@
-# Web3Auth Android SFA QuickStart using Firebase for JWT
+# ⚠️ Deprecated — SFA Android Quick Start
 
-[![Web3Auth](https://img.shields.io/badge/Web3Auth-SDK-blue)](https://web3auth.io/docs/sdk/core-kit/sfa-android)
-[![Web3Auth](https://img.shields.io/badge/Web3Auth-Community-cyan)](https://community.web3auth.io)
+> **This example uses the Single Factor Auth (SFA) Android SDK (`single-factor-auth-android`), which is deprecated.**
+>
+> The SFA SDK is no longer maintained. Please use the standard [MetaMask Embedded Wallets Android SDK](https://docs.metamask.io/embedded-wallets/sdk/android/) instead.
 
-[Join our Community Portal](https://community.web3auth.io/) to get support and stay up to date with the latest news and updates.
+## Migration
 
-This example demonstrates how to use Web3Auth's Single Factor Authentication in Android.
-
-## How to Use
-
-### Download Manually
+Use the [android-quick-start](../android-quick-start) example in this repository, which demonstrates the same Firebase custom authentication flow using the current SDK:
 
 ```bash
-npx degit Web3Auth/web3auth-core-kit-examples/single-factor-auth-android/sfa-android-quick-start w3a-sfa-android
+git clone https://github.com/Web3Auth/web3auth-android-examples.git
+cd web3auth-android-examples/android-quick-start
 ```
 
-Install & Run:
+For custom JWT authentication (as this SFA example demonstrated with Firebase), refer to the [android-firebase-example](../android-firebase-example), which uses `web3Auth.connectTo(LoginParams(authConnection = AuthConnection.CUSTOM, authConnectionId = "...", idToken = idToken))` — the current equivalent of the SFA login flow.
 
-```bash
-cd w3a-sfa-android
-# Open in Android Studio
-```
+## Resources
 
-## Important Links
-
-- [Website](https://web3auth.io)
-- [Docs](https://web3auth.io/docs)
-- [Guides](https://web3auth.io/docs/guides)
-- [SDK / API References](https://web3auth.io/docs/sdk)
-- [Pricing](https://web3auth.io/pricing.html)
-- [Community Portal](https://community.web3auth.io)
+- [Android SDK Documentation](https://docs.metamask.io/embedded-wallets/sdk/android/)
+- [Custom Authentication Guide](https://docs.metamask.io/embedded-wallets/sdk/android/advanced/custom-authentication/)
+- [MetaMask Embedded Wallets Docs](https://docs.metamask.io/embedded-wallets/)
+- [Dashboard](https://dashboard.web3auth.io)
+- [Builder Hub Community](https://builder.metamask.io/c/embedded-wallets/5)

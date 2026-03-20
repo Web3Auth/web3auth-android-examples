@@ -1,73 +1,54 @@
-# Web3Auth Mobile SDK Examples
+# MetaMask Embedded Wallets — Android Examples
 
-[Web3Auth](https://web3auth.io) is a pluggable auth infrastructure for Web3 wallets and applications. This repository contains examples demonstrating the integration of Web3Auth's plug-and-play SDKs across various mobile platforms.
+Android examples for integrating [MetaMask Embedded Wallets](https://docs.metamask.io/embedded-wallets/) (formerly Web3Auth Plug and Play) into native Android applications. The SDK is written in Kotlin and provides social login, custom authentication, and blockchain interactions without requiring users to manage private keys.
 
-## 🌟 Key Features
+## Examples
 
-- **Plug-and-Play Integration**: Ready-to-use SDKs for iOS, Android, React Native, and Flutter
-- **Social Logins**: Support for multiple authentication providers (Google, Facebook, Twitter, etc.)
-- **Blockchain Support**: Examples for various blockchain integrations (EVM, Solana, etc.)
-- **Custom Authentication**: Examples showing custom auth provider integration
-- **Aggregate Verifiers**: Advanced examples demonstrating multi-provider authentication
+| Example | Description |
+|---|---|
+| [android-quick-start](./android-quick-start) | Basic integration with social login and EVM (Sepolia) |
+| [android-auth0-example](./android-auth0-example) | Custom authentication via Auth0 JWT flow |
+| [android-firebase-example](./android-firebase-example) | Custom authentication via Firebase ID token |
+| [android-aggregate-verifier-example](./android-aggregate-verifier-example) | Grouped connections — same wallet across Google + Email Passwordless |
+| [android-solana-example](./android-solana-example) | Solana integration using sol4k and Jetpack Compose |
+| [android-playground](./android-playground) | Full-featured playground with all SDK capabilities |
 
-## 📱 Platform Examples
+> **Note:** The `sfa-android-quick-start` folder uses the Single Factor Auth (SFA) Android SDK, which is deprecated. Use [android-quick-start](./android-quick-start) with the standard Android SDK instead.
 
-### React Native
-- [Quick Start Example](./react-native/rn-bare-quick-start): Basic integration with EVM chains
-- [Auth0 Example](./react-native/rn-bare-auth0-example): Custom authentication with Auth0
-- [Firebase Example](./react-native/rn-bare-firebase-example): Integration with Firebase authentication
-- [Solana Example](./react-native/rn-bare-solana-example): Integration with Solana blockchain
-- [Aggregate Verifier Example](./react-native/rn-bare-aggregate-verifier-example): Multi-provider authentication
-- [Expo Example](./react-native/rn-expo-example): Integration in Expo framework
+## Getting Started
 
-### iOS
-- [Quick Start Example](./ios/ios-quick-start): Basic integration with EVM chains
-- [Auth0 Example](./ios/ios-auth0-example): Custom authentication with Auth0
-- [Firebase Example](./ios/ios-firebase-example): Integration with Firebase authentication
-- [Solana Example](./ios/ios-solana-example): Integration with Solana blockchain
-- [Aptos Example](./ios/ios-aptos-example): Integration with Aptos blockchain
-- [Aggregate Verifier Example](./ios/ios-aggregate-verifier-example): Multi-provider authentication
-- [Playground](./ios/ios-playground): Advanced features and configurations
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/Web3Auth/web3auth-android-examples.git
+   ```
+2. Open the example directory of your choice in Android Studio.
+3. Create a project on the [Embedded Wallets Dashboard](https://dashboard.web3auth.io) and get your Client ID.
+4. Allowlist your app's redirect URI on the dashboard: `{YOUR_APP_PACKAGE_NAME}://auth`
+5. Set your Client ID in the example's `app/src/main/res/values/strings.xml`.
+6. Follow the individual example README for any provider-specific configuration.
+7. Run on a device or emulator (API 24+).
 
-### Flutter
-- [Quick Start Example](./flutter/flutter-quick-start): Basic integration with EVM chains
-- [Auth0 Example](./flutter/flutter-auth0-example): Custom authentication with Auth0
-- [Firebase Example](./flutter/flutter-firebase-example): Integration with Firebase authentication
-- [Aggregate Verifier Example](./flutter/flutter-aggregate-verifier-example): Multi-provider authentication
+## Requirements
 
-### Android
-- [Quick Start Example](./android/android-quick-start): Basic integration with EVM chains
-- [Auth0 Example](./android/android-auth0-example): Custom authentication with Auth0
-- [Firebase Example](./android/android-firebase-example): Integration with Firebase authentication
-- [Aggregate Verifier Example](./android/android-aggregate-verifier-example): Multi-provider authentication
+- Android Studio Hedgehog (2023.1.1) or later
+- Android API 24 or newer
+- Compile SDK 34
+- JDK 17+
 
-## 🚀 Getting Started
+## SDK
 
-Each example contains its own README with specific setup instructions. Generally, you'll need to:
+- **Package**: `com.github.web3auth:web3auth-android-sdk`
+- **Current version used in examples**: `10.0.0`
+- **Latest releases**: [github.com/Web3Auth/web3auth-android-sdk/releases](https://github.com/Web3Auth/web3auth-android-sdk/releases)
 
-1. Clone this repository
-2. Choose your platform and example
-3. Follow the example-specific README instructions
-4. Get your Web3Auth Client ID from the [Web3Auth Dashboard](https://dashboard.web3auth.io)
-5. Configure the example with your Client ID and run it
+## Resources
 
-## 📚 Documentation
+- [Android SDK Documentation](https://docs.metamask.io/embedded-wallets/sdk/android/)
+- [MetaMask Embedded Wallets Docs](https://docs.metamask.io/embedded-wallets/)
+- [Dashboard](https://dashboard.web3auth.io)
+- [Builder Hub Community](https://builder.metamask.io/c/embedded-wallets/5)
+- [GitHub Issues](https://github.com/Web3Auth/web3auth-android-examples/issues)
 
-- [Web3Auth Documentation](https://web3auth.io/docs)
-- [Integration Builder](https://web3auth.io/docs/integration-builder)
-- Platform-specific guides:
-  - [iOS Guide](https://web3auth.io/docs/sdk/pnp/ios)
-  - [Android Guide](https://web3auth.io/docs/sdk/pnp/android)
-  - [React Native Guide](https://web3auth.io/docs/sdk/pnp/react-native)
-  - [Flutter Guide](https://web3auth.io/docs/sdk/pnp/flutter)
+## License
 
-## 🤝 Support
-
-- [Join our Discord](https://discord.gg/web3auth)
-- [Visit our Website](https://web3auth.io)
-- [Follow us on Twitter](https://twitter.com/web3auth)
-- [Submit an Issue](https://github.com/Web3Auth/web3auth-mobile-examples/issues)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+MIT — see [LICENSE](./LICENSE) for details.
