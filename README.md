@@ -13,8 +13,6 @@ Android examples for integrating [MetaMask Embedded Wallets](https://docs.metama
 | [android-solana-example](./android-solana-example) | Solana integration using sol4k and Jetpack Compose |
 | [android-playground](./android-playground) | Full-featured playground with all SDK capabilities |
 
-> **Note:** The `sfa-android-quick-start` folder uses the Single Factor Auth (SFA) Android SDK, which is deprecated. Use [android-quick-start](./android-quick-start) with the standard Android SDK instead.
-
 ## Getting Started
 
 1. Clone this repository:
