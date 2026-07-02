@@ -13,7 +13,7 @@ Basic Android integration demonstrating social login with [MetaMask Embedded Wal
 ## Requirements
 
 - Android Studio Hedgehog (2023.1.1) or later
-- Android API 24+, Compile SDK 34
+- Android API 26+, Compile SDK 34
 - JDK 17+
 - [MetaMask Embedded Wallets Dashboard](https://dashboard.web3auth.io) account
 
@@ -40,7 +40,7 @@ In `app/src/main/res/values/strings.xml`, replace the placeholder:
 
 ### 4. Open in Android Studio and run
 
-Open the `android-quick-start` directory in Android Studio, sync Gradle, and run on a device or emulator (API 24+).
+Open the `android-quick-start` directory in Android Studio, sync Gradle, and run on a device or emulator (API 26+).
 
 ## How It Works
 
@@ -62,7 +62,7 @@ Add the SDK to your `app/build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'com.github.web3auth:web3auth-android-sdk:10.0.0'
+    implementation 'com.github.web3auth:web3auth-android-sdk:10.0.1'
 }
 ```
 
@@ -135,7 +135,12 @@ override fun onResume() {
 
 ```kotlin
 val loginCompletableFuture: CompletableFuture<Web3AuthResponse> =
-    web3Auth.login(LoginParams(Provider.GOOGLE))
+    web3Auth.connectTo(
+        LoginParams(
+            authConnection = AuthConnection.EMAIL_PASSWORDLESS,
+            loginHint = "user@example.com"
+        )
+    )
 
 loginCompletableFuture.whenComplete { _, error ->
     if (error == null) {

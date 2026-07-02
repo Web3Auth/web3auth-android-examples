@@ -2,6 +2,7 @@ package com.example.android_playground
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import com.example.android_playground.di.appModule
 import com.example.android_playground.ui.presentation.MainScreen
 import com.example.android_playground.ui.theme.AndroidplaygroundTheme
 import com.example.android_playground.viewmodel.MainViewModel
+import com.web3auth.core.Web3Auth
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.GlobalContext.startKoin
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -48,5 +50,14 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         viewModel.setResultUrl(intent.data)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (Web3Auth.getCustomTabsClosed()) {
+            Toast.makeText(this, "User closed the browser.", Toast.LENGTH_SHORT).show()
+            viewModel.setResultUrl(null)
+            Web3Auth.setCustomTabsClosed(false)
+        }
     }
 }

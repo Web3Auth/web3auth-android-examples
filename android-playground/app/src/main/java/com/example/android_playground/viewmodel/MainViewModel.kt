@@ -12,10 +12,9 @@ import com.example.android_playground.data.EthereumUseCaseImpl
 import com.example.android_playground.data.Web3AuthHelper
 import com.example.android_playground.domain.EthereumUseCase
 import com.example.android_playground.utils.chainConfigList
-import com.web3auth.core.types.ChainConfig
-import com.web3auth.core.types.ExtraLoginOptions
+import com.web3auth.core.types.AuthConnection
+import com.web3auth.core.types.Chains
 import com.web3auth.core.types.LoginParams
-import com.web3auth.core.types.Provider
 import com.web3auth.core.types.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,8 +38,8 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
     val balance: StateFlow<String> = _balance
 
 
-    private val _selectedChain: MutableStateFlow<ChainConfig> = MutableStateFlow(chainConfigList[0])
-    val selectedChain: StateFlow<ChainConfig> = _selectedChain
+    private val _selectedChain: MutableStateFlow<Chains> = MutableStateFlow(chainConfigList[0])
+    val selectedChain: StateFlow<Chains> = _selectedChain
 
     lateinit var credentials: Credentials
     lateinit var userInfo: UserInfo
@@ -66,12 +65,12 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
 
     fun login(email: String) {
         val loginParams = LoginParams(
-            loginProvider = Provider.EMAIL_PASSWORDLESS,
-            extraLoginOptions = ExtraLoginOptions(login_hint = email)
+            authConnection = AuthConnection.EMAIL_PASSWORDLESS,
+            loginHint = email
         )
         viewModelScope.launch {
             try {
-                web3AuthHelper.login(loginParams = loginParams).await()
+                web3AuthHelper.connectTo(loginParams = loginParams).await()
                 prepareCredentials()
                 prepareUserInfo()
                 _isLoggedIn.emit(true)
@@ -162,7 +161,7 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
         }
     }
 
-    fun changeChainConfig(config: ChainConfig) {
+    fun changeChainConfig(config: Chains) {
         _selectedChain.value = config
         ethereumUseCase = EthereumUseCaseImpl(
             Web3j.build(
@@ -174,7 +173,7 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
         getBalance()
     }
 
-    fun addChainConfig(config: ChainConfig) {
+    fun addChainConfig(config: Chains) {
         chainConfigList += config
         _selectedChain.value = config
         ethereumUseCase = EthereumUseCaseImpl(

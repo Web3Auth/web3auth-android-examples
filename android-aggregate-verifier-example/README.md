@@ -12,7 +12,7 @@ Android example demonstrating **Grouped Connections** (formerly Aggregate Verifi
 ## Requirements
 
 - Android Studio Hedgehog (2023.1.1) or later
-- Android API 24+, Compile SDK 34
+- Android API 26+, Compile SDK 34
 - JDK 17+
 - [MetaMask Embedded Wallets Dashboard](https://dashboard.web3auth.io) account
 - Google OAuth Client ID (for the Google login connection)
@@ -99,7 +99,13 @@ sessionResponse.whenComplete { _, error ->
 
 ```kotlin
 val loginFuture: CompletableFuture<Web3AuthResponse> =
-    web3Auth.login(LoginParams(Provider.GOOGLE))
+    web3Auth.connectTo(
+        LoginParams(
+            authConnection = AuthConnection.GOOGLE,
+            authConnectionId = GOOGLE_AUTH_CONNECTION_ID,
+            groupedAuthConnectionId = GROUPED_AUTH_CONNECTION_ID
+        )
+    )
 
 loginFuture.whenComplete { _, error ->
     if (error == null) {
@@ -112,13 +118,15 @@ loginFuture.whenComplete { _, error ->
 
 ```kotlin
 val loginFuture: CompletableFuture<Web3AuthResponse> =
-    web3Auth.login(
+    web3Auth.connectTo(
         LoginParams(
-            Provider.JWT,
+            authConnection = AuthConnection.CUSTOM,
+            authConnectionId = AUTH0_AUTH_CONNECTION_ID,
+            groupedAuthConnectionId = GROUPED_AUTH_CONNECTION_ID,
             extraLoginOptions = ExtraLoginOptions(
                 domain = AUTH0_DOMAIN,
-                verifierIdField = "email",
-                isVerifierIdCaseSensitive = false
+                userIdField = "email",
+                isUserIdCaseSensitive = false
             )
         )
     )

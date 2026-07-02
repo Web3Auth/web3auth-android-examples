@@ -1,11 +1,11 @@
 package com.example.android_playground.utils
 
-import com.web3auth.core.types.ChainConfig
 import com.web3auth.core.types.ChainNamespace
+import com.web3auth.core.types.Chains
 
 
 var chainConfigList = arrayOf(
-    ChainConfig(
+    Chains(
         chainNamespace = ChainNamespace.EIP155,
         decimals = 18,
         blockExplorerUrl = "https://sepolia.etherscan.io/",
@@ -15,7 +15,7 @@ var chainConfigList = arrayOf(
         ticker = "ETH",
         tickerName = "Ethereum"
     ),
-    ChainConfig(
+    Chains(
         chainNamespace = ChainNamespace.EIP155,
         decimals = 18,
         blockExplorerUrl = "https://sepolia.etherscan.io/",

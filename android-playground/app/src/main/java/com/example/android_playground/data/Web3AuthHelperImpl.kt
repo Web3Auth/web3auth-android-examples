@@ -10,8 +10,8 @@ import java.util.concurrent.CompletableFuture
 class Web3AuthHelperImpl(
     private val web3Auth: Web3Auth
 ): Web3AuthHelper {
-    override suspend fun login(loginParams: LoginParams): CompletableFuture<Web3AuthResponse> {
-        return web3Auth.login(loginParams)
+    override suspend fun connectTo(loginParams: LoginParams): CompletableFuture<Web3AuthResponse> {
+        return web3Auth.connectTo(loginParams)
     }
 
     override suspend fun logOut(): CompletableFuture<Void> {
@@ -19,7 +19,7 @@ class Web3AuthHelperImpl(
     }
 
     override fun getPrivateKey(): String {
-      return web3Auth.getPrivkey()
+      return web3Auth.getPrivateKey()
     }
 
     override fun getUserInfo(): UserInfo {
@@ -39,7 +39,7 @@ class Web3AuthHelperImpl(
     }
 
     override suspend fun isUserAuthenticated(): Boolean {
-        return web3Auth.getPrivkey().isNotEmpty()
+        return web3Auth.getPrivateKey().isNotEmpty()
     }
 
 }

@@ -25,12 +25,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.android_playground.ui.theme.Typography
 import com.example.android_playground.viewmodel.MainViewModel
-import com.web3auth.core.types.ChainConfig
 import com.web3auth.core.types.ChainNamespace
+import com.web3auth.core.types.Chains
 
 
 @Composable
-fun AddCustomChainScreen(viewModel: MainViewModel, onChainAdd: (ChainConfig) -> Unit) {
+fun AddCustomChainScreen(viewModel: MainViewModel, onChainAdd: (Chains) -> Unit) {
     var displayNameText by remember { mutableStateOf("") }
     var tickerNameText by remember { mutableStateOf("") }
     var tickerText by remember { mutableStateOf("") }
@@ -99,7 +99,7 @@ fun AddCustomChainScreen(viewModel: MainViewModel, onChainAdd: (ChainConfig) -> 
 
             Spacer(modifier = Modifier.height(24.dp))
             Button({
-                val chainConfig = ChainConfig(
+                val chainConfig = Chains(
                     chainNamespace = ChainNamespace.EIP155,
                     decimals = 18,
                     blockExplorerUrl = blockExplorerText,

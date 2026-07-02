@@ -53,7 +53,7 @@ object Web3AuthSampleConfig {
 
 ```kotlin
 dependencies {
-    implementation("com.github.Web3Auth:web3auth-android-sdk:10.0.0")
+    implementation("com.github.web3auth:web3auth-android-sdk:10.0.1")
     implementation("org.sol4k:sol4k:0.4.1")
     implementation("io.insert-koin:koin-android:3.5.3")
 }

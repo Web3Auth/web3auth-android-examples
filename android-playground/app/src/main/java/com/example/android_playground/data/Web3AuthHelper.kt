@@ -7,7 +7,7 @@ import com.web3auth.core.types.Web3AuthResponse
 import java.util.concurrent.CompletableFuture
 
 interface Web3AuthHelper {
-    suspend fun login(loginParams: LoginParams): CompletableFuture<Web3AuthResponse>
+    suspend fun connectTo(loginParams: LoginParams): CompletableFuture<Web3AuthResponse>
     suspend fun logOut(): CompletableFuture<Void>
     fun getPrivateKey(): String
 

@@ -1,4 +1,4 @@
-package com.example.androidsolanaexample.ui.presentation
+package com.example.android_playground.ui.presentation
 
 import android.util.Log
 import androidx.compose.foundation.background

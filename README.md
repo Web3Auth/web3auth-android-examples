@@ -24,19 +24,19 @@ Android examples for integrating [MetaMask Embedded Wallets](https://docs.metama
 4. Allowlist your app's redirect URI on the dashboard: `{YOUR_APP_PACKAGE_NAME}://auth`
 5. Set your Client ID in the example's `app/src/main/res/values/strings.xml`.
 6. Follow the individual example README for any provider-specific configuration.
-7. Run on a device or emulator (API 24+).
+7. Run on a device or emulator (API 26+).
 
 ## Requirements
 
 - Android Studio Hedgehog (2023.1.1) or later
-- Android API 24 or newer
+- Android API 26 or newer
 - Compile SDK 34
 - JDK 17+
 
 ## SDK
 
 - **Package**: `com.github.web3auth:web3auth-android-sdk`
-- **Current version used in examples**: `10.0.0`
+- **Current version used in examples**: `10.0.1`
 - **Latest releases**: [github.com/Web3Auth/web3auth-android-sdk/releases](https://github.com/Web3Auth/web3auth-android-sdk/releases)
 
 ## Resources

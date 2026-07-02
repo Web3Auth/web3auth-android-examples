@@ -68,7 +68,7 @@ import com.example.android_playground.utils.TabView
 import com.example.android_playground.utils.addressAbbreviation
 import com.example.android_playground.utils.chainConfigList
 import com.example.android_playground.viewmodel.MainViewModel
-import com.example.androidsolanaexample.ui.presentation.UserInfoDialog
+import com.example.android_playground.ui.presentation.UserInfoDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

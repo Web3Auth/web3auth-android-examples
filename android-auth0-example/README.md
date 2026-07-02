@@ -12,7 +12,7 @@ Android example demonstrating custom authentication with Auth0 using [MetaMask E
 ## Requirements
 
 - Android Studio Hedgehog (2023.1.1) or later
-- Android API 24+, Compile SDK 34
+- Android API 26+, Compile SDK 34
 - JDK 17+
 - [Auth0 account](https://auth0.com) with a Native application configured
 - [MetaMask Embedded Wallets Dashboard](https://dashboard.web3auth.io) account
