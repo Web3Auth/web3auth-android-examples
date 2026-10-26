@@ -4,11 +4,14 @@ Android example demonstrating custom authentication with Firebase using [MetaMas
 
 ## Features
 
-- Firebase Email/Password authentication
+- Firebase Email/Password authentication with the shared demo account `custom+id_token@firebase.login`
 - Custom JWT flow: Firebase ID token → Web3Auth wallet derivation
 - EVM wallet creation and management
 - Get wallet address, Sepolia balance, sign messages, and send transactions
 - Session persistence across app restarts
+- Citadel session calls: `getUserInfoAsync()`, `getAccessToken()`, and `refreshSession()`
+
+Firebase login passes an `idToken`, so it stays on the single-factor path. SDK 11 rejects `enableMFA()` and `manageMFA()` for that path. Wallet Services still launches with `showWalletUI()`.
 
 ## Requirements
 
@@ -86,8 +89,11 @@ sessionResponse.whenComplete { _, error ->
 ### Firebase sign-in → Web3Auth wallet
 
 ```kotlin
-// 1. Sign in with Firebase
-Firebase.auth.signInWithEmailAndPassword(email, password)
+// Same account as the iOS Firebase example.
+Firebase.auth.signInWithEmailAndPassword(
+    "custom+id_token@firebase.login",
+    "Welcome@W3A"
+)
     .addOnCompleteListener { task ->
         if (task.isSuccessful) {
             // 2. Get the Firebase ID token (must be fresh — max 60s old)

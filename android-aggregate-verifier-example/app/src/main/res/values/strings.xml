@@ -9,6 +9,9 @@
     <string name="logout">Logout</string>
     <string name="not_logged_in">Log in to see Web3Auth Data</string>
     <string name="enable_mfa">Enable MFA</string>
+    <string name="manage_mfa">Manage MFA</string>
+    <string name="get_access_token">Get Access Token</string>
+    <string name="refresh_session">Refresh Session</string>
     <string name="launch_wallet_services">Launch Wallet Services</string>
     <string name="address">Address</string>
     <string name="balance">Balance</string>

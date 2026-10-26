@@ -72,7 +72,9 @@ class MainActivity : AppCompatActivity() {
             Language.EN,
             ThemeModes.LIGHT,
             true,
-            hashMapOf("primary" to "#eb5424")
+            hashMapOf("primary" to "#eb5424"),
+            tncLink = "https://web3auth.io/docs/legal/terms-and-conditions",
+            privacyPolicy = "https://web3auth.io/docs/legal/privacy-policy"
         )
 
         val authConnections = listOf(
@@ -127,11 +129,11 @@ class MainActivity : AppCompatActivity() {
                 } catch (ex: Exception) {
                     Log.d("MainActivity_Web3Auth", ex.message ?: "Unable to fetch keys")
                 }
-                println("Web3Auth UserInfo ${web3Auth.getUserInfo()}")
-                Log.d(
-                    "MainActivity_Web3Auth",
-                    web3Auth.getUserInfo()?.toString() ?: "No user logged in"
-                )
+                web3Auth.getUserInfoAsync().whenComplete { info, infoError ->
+                    if (infoError == null) {
+                        Log.d("MainActivity_Web3Auth", "idToken present=${!info.idToken.isNullOrBlank()}")
+                    }
+                }
             } else {
                 Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
             }
@@ -168,6 +170,18 @@ class MainActivity : AppCompatActivity() {
         val getEnableMFAButton = findViewById<Button>(R.id.enableMFA)
         getEnableMFAButton.setOnClickListener { enableMFA() }
         getEnableMFAButton.visibility = View.GONE
+
+        val manageMfaButton = findViewById<Button>(R.id.manageMFA)
+        manageMfaButton.setOnClickListener { manageMFA() }
+        manageMfaButton.visibility = View.GONE
+
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        getAccessTokenButton.setOnClickListener { getAccessToken() }
+        getAccessTokenButton.visibility = View.GONE
+
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
+        refreshSessionButton.setOnClickListener { refreshSession() }
+        refreshSessionButton.visibility = View.GONE
 
         val getLaunchWalletServicesButton = findViewById<Button>(R.id.launchWalletServices)
         getLaunchWalletServicesButton.setOnClickListener { launchWalletServices() }
@@ -242,6 +256,47 @@ class MainActivity : AppCompatActivity() {
                 Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
             }
         }
+    }
+
+    private fun manageMFA() {
+        web3Auth.manageMFA().whenComplete { _, error ->
+            runOnUiThread {
+                if (error == null) {
+                    Log.d("MainActivity_Web3Auth", "MFA management launched")
+                } else {
+                    showResult(error.message ?: "Unable to manage MFA")
+                }
+            }
+        }
+    }
+
+    private fun getAccessToken() {
+        web3Auth.getAccessToken().whenComplete { token, error ->
+            runOnUiThread {
+                showResult(
+                    if (error == null) "Access token:\n$token" else error.message ?: "Unable to get access token"
+                )
+            }
+        }
+    }
+
+    private fun refreshSession() {
+        web3Auth.refreshSession().whenComplete { _, error ->
+            runOnUiThread {
+                if (error == null) {
+                    setCredentialsIfPresent()
+                    reRender()
+                } else {
+                    showResult(error.message ?: "Unable to refresh session")
+                }
+            }
+        }
+    }
+
+    private fun showResult(message: String) {
+        val contentTextView = findViewById<TextView>(R.id.contentTextView)
+        contentTextView.visibility = View.VISIBLE
+        contentTextView.text = message
     }
 
     private fun launchWalletServices() {
@@ -342,6 +397,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun reRender() {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runOnUiThread { reRender() }
+            return
+        }
+        web3Auth.getUserInfoAsync().whenComplete { userInfo, _ ->
+            runOnUiThread { renderSession(userInfo) }
+        }
+    }
+
+    private fun renderSession(userInfo: UserInfo?) {
         val contentTextView = findViewById<TextView>(R.id.contentTextView)
         val signInEPButton = findViewById<Button>(R.id.signInEP)
         val signInGoogleButton = findViewById<Button>(R.id.signInGoogle)
@@ -351,42 +416,40 @@ class MainActivity : AppCompatActivity() {
         val getMessageButton = findViewById<Button>(R.id.getMessage)
         val getTransactionButton = findViewById<Button>(R.id.getTransaction)
         val getEnableMFAButton = findViewById<Button>(R.id.enableMFA)
+        val manageMfaButton = findViewById<Button>(R.id.manageMFA)
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
         val getLaunchWalletServicesButton = findViewById<Button>(R.id.launchWalletServices)
 
-        var key: String? = null
-        var userInfo: UserInfo? = null
-        try {
-            key = web3Auth.getPrivateKey()
-            userInfo = web3Auth.getUserInfo()
+        val key = try {
+            web3Auth.getPrivateKey()
         } catch (ex: Exception) {
             Log.d("MainActivity_Web3Auth", ex.message ?: "Unable to fetch session")
+            ""
         }
-        println(userInfo)
-        if (!key.isNullOrEmpty()) {
+        val loggedIn = key.isNotEmpty()
+        if (loggedIn) {
             contentTextView.text = gson.toJson(userInfo) + "\n Private Key: " + key
             contentTextView.visibility = View.VISIBLE
             signInEPButton.visibility = View.GONE
             signInGoogleButton.visibility = View.GONE
-            signOutButton.visibility = View.VISIBLE
-            getAddressButton.visibility = View.VISIBLE
-            getBalanceButton.visibility = View.VISIBLE
-            getMessageButton.visibility = View.VISIBLE
-            getTransactionButton.visibility = View.VISIBLE
-            getEnableMFAButton.visibility = View.VISIBLE
-            getLaunchWalletServicesButton.visibility = View.VISIBLE
         } else {
             contentTextView.text = getString(R.string.not_logged_in)
             contentTextView.visibility = View.GONE
             signInEPButton.visibility = View.VISIBLE
             signInGoogleButton.visibility = View.VISIBLE
-            signOutButton.visibility = View.GONE
-            getAddressButton.visibility = View.GONE
-            getBalanceButton.visibility = View.GONE
-            getMessageButton.visibility = View.GONE
-            getTransactionButton.visibility = View.GONE
-            getEnableMFAButton.visibility = View.GONE
-            getLaunchWalletServicesButton.visibility = View.GONE
         }
+        val sessionVisibility = if (loggedIn) View.VISIBLE else View.GONE
+        signOutButton.visibility = sessionVisibility
+        getAddressButton.visibility = sessionVisibility
+        getBalanceButton.visibility = sessionVisibility
+        getMessageButton.visibility = sessionVisibility
+        getTransactionButton.visibility = sessionVisibility
+        getEnableMFAButton.visibility = sessionVisibility
+        manageMfaButton.visibility = sessionVisibility
+        getAccessTokenButton.visibility = sessionVisibility
+        refreshSessionButton.visibility = sessionVisibility
+        getLaunchWalletServicesButton.visibility = sessionVisibility
     }
 
     private fun setCredentialsIfPresent() {

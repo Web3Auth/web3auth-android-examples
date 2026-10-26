@@ -12,8 +12,10 @@ import com.example.android_playground.data.EthereumUseCaseImpl
 import com.example.android_playground.data.Web3AuthHelper
 import com.example.android_playground.domain.EthereumUseCase
 import com.example.android_playground.utils.chainConfigList
+import com.google.gson.JsonArray
 import com.web3auth.core.types.AuthConnection
 import com.web3auth.core.types.Chains
+import com.web3auth.core.types.ExtraLoginOptions
 import com.web3auth.core.types.LoginParams
 import com.web3auth.core.types.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,6 +43,9 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
     private val _selectedChain: MutableStateFlow<Chains> = MutableStateFlow(chainConfigList[0])
     val selectedChain: StateFlow<Chains> = _selectedChain
 
+    private val _sessionMessage: MutableStateFlow<String> = MutableStateFlow("")
+    val sessionMessage: StateFlow<String> = _sessionMessage
+
     lateinit var credentials: Credentials
     lateinit var userInfo: UserInfo
     private var ethereumUseCase: EthereumUseCase = EthereumUseCaseImpl(
@@ -59,13 +64,17 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
         credentials = Credentials.create(privateKey())
     }
 
-    private fun prepareUserInfo() {
-        userInfo = web3AuthHelper.getUserInfo()
+    private suspend fun prepareUserInfo() {
+        userInfo = web3AuthHelper.getUserInfoAsync().await()
     }
 
     fun login(email: String) {
+        if (email.isBlank() || !email.contains("@")) {
+            return
+        }
         val loginParams = LoginParams(
             authConnection = AuthConnection.EMAIL_PASSWORDLESS,
+            extraLoginOptions = ExtraLoginOptions(login_hint = email),
             loginHint = email
         )
         viewModelScope.launch {
@@ -76,7 +85,8 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
                 _isLoggedIn.emit(true)
             } catch (error: Exception) {
                 _isLoggedIn.emit(false)
-                throw error
+                Log.e("MainViewModel", "login failed", error)
+                _sessionMessage.value = error.message ?: "Login failed"
             }
         }
     }
@@ -211,11 +221,91 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper) : ViewModel() {
     }
 
     fun userInfo(onAvailable: (userInfo: UserInfo?, error: String?) -> Unit) {
-        try {
-            val info = web3AuthHelper.getUserInfo()
-            onAvailable(info, null)
-        } catch (e: Exception) {
-            e.localizedMessage?.let { onAvailable(null, it) }
+        viewModelScope.launch {
+            try {
+                val info = web3AuthHelper.getUserInfoAsync().await()
+                userInfo = info
+                onAvailable(info, null)
+            } catch (e: Exception) {
+                e.localizedMessage?.let { onAvailable(null, it) }
+            }
+        }
+    }
+
+    fun fetchAccessToken() {
+        viewModelScope.launch {
+            try {
+                _sessionMessage.emit(web3AuthHelper.getAccessToken().await())
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Unable to get access token")
+            }
+        }
+    }
+
+    fun refreshSession() {
+        viewModelScope.launch {
+            try {
+                web3AuthHelper.refreshSession().await()
+                prepareCredentials()
+                prepareUserInfo()
+                _sessionMessage.emit("Session refreshed")
+                _isLoggedIn.emit(true)
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Unable to refresh session")
+            }
+        }
+    }
+
+    fun enableMfa() {
+        viewModelScope.launch {
+            try {
+                web3AuthHelper.enableMFA().await()
+                _sessionMessage.emit("MFA setup launched")
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Unable to enable MFA")
+            }
+        }
+    }
+
+    fun manageMfa() {
+        viewModelScope.launch {
+            try {
+                web3AuthHelper.manageMFA().await()
+                _sessionMessage.emit("MFA management launched")
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Unable to manage MFA")
+            }
+        }
+    }
+
+    fun showWallet() {
+        viewModelScope.launch {
+            try {
+                web3AuthHelper.showWalletUI().await()
+                _sessionMessage.emit("Wallet UI launched")
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Unable to launch wallet")
+            }
+        }
+    }
+
+    fun walletPersonalSign() {
+        viewModelScope.launch {
+            try {
+                val params = JsonArray().apply {
+                    add("Hello, Web3Auth from Android!")
+                    add(credentials.address)
+                    add("Android")
+                }
+                val signResult = web3AuthHelper.request(
+                    "personal_sign",
+                    params,
+                    "web3auth"
+                ).await()
+                _sessionMessage.emit(signResult.toString())
+            } catch (e: Exception) {
+                _sessionMessage.emit(e.message ?: "Wallet sign failed")
+            }
         }
     }
 }

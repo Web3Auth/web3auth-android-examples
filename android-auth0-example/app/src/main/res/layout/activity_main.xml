@@ -26,6 +26,17 @@
                 android:layout_marginEnd="16dp" />
         </ScrollView>
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
         <Button
             android:id="@+id/getAddress"
             android:layout_width="match_parent"
@@ -72,6 +83,33 @@
             android:text="@string/enable_mfa" />
 
         <Button
+            android:id="@+id/manageMFA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/manage_mfa" />
+
+        <Button
+            android:id="@+id/getAccessToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/get_access_token" />
+
+        <Button
+            android:id="@+id/refreshSession"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="8dp"
+            android:text="@string/refresh_session" />
+
+        <Button
             android:id="@+id/launchWalletServices"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,6 +126,8 @@
             android:layout_marginRight="16dp"
             android:layout_marginBottom="8dp"
             android:text="@string/logout" />
+        </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 
     <Button

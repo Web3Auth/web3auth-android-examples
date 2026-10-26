@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +39,10 @@ fun HomeScreen(viewModel: MainViewModel) {
 
     val isAccountLoaded = viewModel.isAccountLoaded.collectAsState()
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(vertical = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -97,6 +104,20 @@ fun HomeScreen(viewModel: MainViewModel) {
             }
         }
 
+        SessionButton(label = "Get Access Token") {
+            viewModel.fetchAccessToken { result ->
+                dialogContent.value = result
+                openDialog.value = true
+            }
+        }
+
+        SessionButton(label = "Refresh Session") {
+            viewModel.refreshSession { result ->
+                dialogContent.value = result
+                openDialog.value = true
+            }
+        }
+
         LogOutButton {
             viewModel.logOut()
 
@@ -128,7 +149,14 @@ fun GetUserInfoButton(onClick: () -> Unit) {
 @Composable
 fun GetPrivateKeyButton(onClick: () -> Unit) {
     Button(onClick = { onClick() }) {
-        Text("Show Private Key")
+        Text("Show Address")
+    }
+}
+
+@Composable
+fun SessionButton(label: String, onClick: () -> Unit) {
+    Button(onClick = { onClick() }, modifier = Modifier.fillMaxWidth(0.8f)) {
+        Text(label)
     }
 }
 

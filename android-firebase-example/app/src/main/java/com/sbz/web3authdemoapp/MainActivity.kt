@@ -9,12 +9,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GetTokenResult
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.web3auth.core.Web3Auth
 import com.web3auth.core.types.*
 import org.torusresearch.fetchnodedetails.types.Web3AuthNetwork
@@ -35,6 +32,7 @@ import org.web3j.utils.Numeric
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
@@ -46,8 +44,13 @@ class MainActivity : AppCompatActivity() {
     private val rpcUrl = "https://1rpc.io/sepolia"
 
     private val gson = Gson()
+    private val chainCalls = Executors.newSingleThreadExecutor()
+
     companion object {
         private const val TAG = "MainActivity_Web3Auth"
+        // Same demo account as the iOS Firebase example, on project web3auth-oauth-logins.
+        private const val FIREBASE_EMAIL = "custom+id_token@firebase.login"
+        private const val FIREBASE_PASSWORD = "Welcome@W3A"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +70,7 @@ class MainActivity : AppCompatActivity() {
            Web3AuthOptions(
                clientId = getString(R.string.web3auth_project_id), // pass over your Web3Auth Client ID from Developer Dashboard
                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET, // pass over the network you want to use
+               authBuildEnv = BuildEnv.PRODUCTION,
                redirectUrl = "com.sbz.web3authdemoapp://auth", // your app's redirect URL
                
                // Optional parameters
@@ -81,7 +85,9 @@ class MainActivity : AppCompatActivity() {
                        true,
                        hashMapOf(
                            "primary" to "#eb5424"
-                       )
+                       ),
+                       tncLink = "https://web3auth.io/docs/legal/terms-and-conditions",
+                       privacyPolicy = "https://web3auth.io/docs/legal/privacy-policy"
                    ),
 
                ),
@@ -105,7 +111,11 @@ class MainActivity : AppCompatActivity() {
                 reRender()
                 println("PrivKey: " + web3Auth.getPrivateKey())
                 println("ed25519PrivKey: " + web3Auth.getEd25519PrivateKey())
-                println("Web3Auth UserInfo" + web3Auth.getUserInfo())
+                web3Auth.getUserInfoAsync().whenComplete { info, infoError ->
+                    if (infoError == null) {
+                        Log.d(TAG, "idToken present=${info?.idToken?.isNotBlank() == true}")
+                    }
+                }
                 credentials = Credentials.create(web3Auth.getPrivateKey())
 
             } else {
@@ -138,9 +148,13 @@ class MainActivity : AppCompatActivity() {
         getTransactionButton.setOnClickListener { sendTransaction(0.001, "0xeaA8Af602b2eDE45922818AE5f9f7FdE50cFa1A8") }
         getTransactionButton.visibility = View.GONE
 
-        val getEnableMFAButton = findViewById<Button>(R.id.enableMFA)
-        getEnableMFAButton.setOnClickListener { enableMFA() }
-        getEnableMFAButton.visibility = View.GONE
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        getAccessTokenButton.setOnClickListener { getAccessToken() }
+        getAccessTokenButton.visibility = View.GONE
+
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
+        refreshSessionButton.setOnClickListener { refreshSession() }
+        refreshSessionButton.visibility = View.GONE
 
         val getLaunchWalletServicesButton = findViewById<Button>(R.id.launchWalletServices)
         getLaunchWalletServicesButton.setOnClickListener { launchWalletServices() }
@@ -172,7 +186,7 @@ class MainActivity : AppCompatActivity() {
                 return
             }
             Log.d(TAG, "Attempting Firebase sign in...")
-            auth.signInWithEmailAndPassword("android@firebase.com", "Android@Web3Auth")
+            auth.signInWithEmailAndPassword(FIREBASE_EMAIL, FIREBASE_PASSWORD)
                 .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
                     // Sign in success, update UI with the signed-in user's information
@@ -193,27 +207,33 @@ class MainActivity : AppCompatActivity() {
                                         }
                                         return@addOnSuccessListener
                                     }
+                                    // Same params as the Flutter Firebase example, which calls this
+                                    // SDK on a background dispatcher. connectTo blocks while it
+                                    // fetches shares, so it must not run on the main thread.
                                     val loginParams = LoginParams(
                                         authConnection = AuthConnection.CUSTOM,
                                         authConnectionId = "w3a-firebase-demo",
+                                        extraLoginOptions = ExtraLoginOptions(userIdField = "sub"),
                                         idToken = idToken
                                     )
-                                    val loginCompletableFuture: CompletableFuture<Web3AuthResponse> = web3Auth.connectTo(loginParams)
-
-                                    loginCompletableFuture.whenComplete { _, error ->
-                                        runOnUiThread {
-                                            if (isFinishing || isDestroyed) {
-                                                Log.w(TAG, "Activity is finishing/destroyed, skipping UI update")
-                                                return@runOnUiThread
-                                            }
-                                            if (error == null) {
+                                    chainCalls.execute {
+                                        try {
+                                            web3Auth.connectTo(loginParams).get()
+                                            runOnUiThread {
+                                                if (isFinishing || isDestroyed) return@runOnUiThread
                                                 credentials = Credentials.create(web3Auth.getPrivateKey())
+                                                Log.d(TAG, "connectTo success address=${credentials.address}")
                                                 reRender()
-                                            } else {
-                                                Log.e(TAG, "Web3Auth login failed", error)
-                                                error.printStackTrace()
-                                                Toast.makeText(this@MainActivity, "Web3Auth login failed: ${error.message}",
-                                                    Toast.LENGTH_SHORT).show()
+                                            }
+                                        } catch (error: Exception) {
+                                            Log.e(TAG, "Web3Auth login failed", error)
+                                            runOnUiThread {
+                                                if (isFinishing || isDestroyed) return@runOnUiThread
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "Web3Auth login failed: ${error.message}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
                                             }
                                         }
                                     }
@@ -284,29 +304,31 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun enableMFA() {
-        auth.currentUser!!.getIdToken(true).addOnSuccessListener { result ->
-            val loginParams = prepareLoginParams(result)
-            val completableFuture = web3Auth.enableMFA(loginParams)
-            completableFuture.whenComplete{_, error ->
+    private fun getAccessToken() {
+        web3Auth.getAccessToken().whenComplete { token, error ->
+            runOnUiThread {
+                showResult(if (error == null) "Access token:\n$token" else error.message ?: "Unable to get access token")
+            }
+        }
+    }
+
+    private fun refreshSession() {
+        web3Auth.refreshSession().whenComplete { _, error ->
+            runOnUiThread {
                 if (error == null) {
-                    Log.d("MainActivity_Web3Auth", "Launched successfully")
-                    // Add your logic
+                    credentials = Credentials.create(web3Auth.getPrivateKey())
+                    reRender()
                 } else {
-                    // Add your logic on error
-                    Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
+                    showResult(error.message ?: "Unable to refresh session")
                 }
             }
         }
-
     }
 
-    private fun prepareLoginParams(result: GetTokenResult): LoginParams {
-        return LoginParams(
-            authConnection = AuthConnection.CUSTOM,
-            authConnectionId = "w3a-firebase-demo",
-            idToken = result.token
-        )
+    private fun showResult(message: String) {
+        val contentTextView = findViewById<TextView>(R.id.contentTextView)
+        contentTextView.visibility = View.VISIBLE
+        contentTextView.text = message
     }
 
     private fun launchWalletServices() {
@@ -331,13 +353,20 @@ class MainActivity : AppCompatActivity() {
         return publicAddress
     }
 
-    private fun getBalance(): BigInteger? {
-        val contentTextView = findViewById<TextView>(R.id.contentTextView)
-        val publicAddress = credentials.address
-        val ethBalance: EthGetBalance = web3.ethGetBalance(publicAddress, DefaultBlockParameterName.LATEST).sendAsync().get()
-        contentTextView.text = ethBalance.balance.toString()
-        println("Balance: ${ethBalance.balance}")
-        return ethBalance.balance
+    private fun getBalance() {
+        chainCalls.execute {
+            try {
+                val ethBalance: EthGetBalance = web3.ethGetBalance(
+                    credentials.address,
+                    DefaultBlockParameterName.LATEST
+                ).send()
+                Log.d(TAG, "Balance: ${ethBalance.balance}")
+                runOnUiThread { showResult(ethBalance.balance.toString()) }
+            } catch (e: Exception) {
+                Log.e(TAG, "getBalance failed", e)
+                runOnUiThread { showResult(e.message ?: "Balance failed") }
+            }
+        }
     }
 
     private fun signMessage(message: String): String {
@@ -349,45 +378,61 @@ class MainActivity : AppCompatActivity() {
         val v = Numeric.toHexString(signature.v).substring(2)
         val signHash = StringBuilder(r).append(s).append(v).toString()
         contentTextView.text = signHash
-        println("Signed Hash: $signHash")
+        Log.d(TAG, "Signed message length=${signHash.length}")
         return signHash
     }
 
-    private fun sendTransaction(amount: Double, recipientAddress: String): String? {
-        val contentTextView = findViewById<TextView>(R.id.contentTextView)
-        val ethGetTransactionCount: EthGetTransactionCount = web3.ethGetTransactionCount(credentials.address, DefaultBlockParameterName.LATEST).sendAsync().get()
-        val nonce: BigInteger = ethGetTransactionCount.transactionCount
-        val value: BigInteger = Convert.toWei(amount.toString(), Convert.Unit.ETHER).toBigInteger()
-        val gasLimit: BigInteger = BigInteger.valueOf(21000)
-        val chainId: EthChainId = web3.ethChainId().sendAsync().get()
+    private fun sendTransaction(amount: Double, recipientAddress: String) {
+        chainCalls.execute {
+            try {
+                val ethGetTransactionCount: EthGetTransactionCount = web3.ethGetTransactionCount(
+                    credentials.address,
+                    DefaultBlockParameterName.LATEST
+                ).send()
+                val nonce: BigInteger = ethGetTransactionCount.transactionCount
+                val value: BigInteger = Convert.toWei(amount.toString(), Convert.Unit.ETHER).toBigInteger()
+                val gasLimit: BigInteger = BigInteger.valueOf(21000)
+                val chainId: EthChainId = web3.ethChainId().send()
 
-        // Raw Transaction
-        val rawTransaction: RawTransaction = RawTransaction.createTransaction(
-            chainId.chainId.toLong(),
-            nonce,
-            gasLimit,
-            recipientAddress,
-            value,
-            "",
-            BigInteger.valueOf(5000000000),
-            BigInteger.valueOf(6000000000000)
-        )
+                val rawTransaction: RawTransaction = RawTransaction.createTransaction(
+                    chainId.chainId.toLong(),
+                    nonce,
+                    gasLimit,
+                    recipientAddress,
+                    value,
+                    "",
+                    BigInteger.valueOf(5000000000),
+                    BigInteger.valueOf(6000000000000)
+                )
 
-        val signedMessage: ByteArray = TransactionEncoder.signMessage(rawTransaction, credentials)
-        val hexValue: String = Numeric.toHexString(signedMessage)
-        val ethSendTransaction: EthSendTransaction = web3.ethSendRawTransaction(hexValue).sendAsync().get()
-        return if(ethSendTransaction.error != null) {
-            println("Tx Error: ${ethSendTransaction.error.message}")
-            contentTextView.text = "Tx Error: ${ethSendTransaction.error.message}"
-            ethSendTransaction.error.message
-        } else {
-            println("Tx Hash: ${ethSendTransaction.transactionHash}")
-            contentTextView.text = "Tx Hash: ${ethSendTransaction.transactionHash}"
-            ethSendTransaction.transactionHash
+                val signedMessage: ByteArray = TransactionEncoder.signMessage(rawTransaction, credentials)
+                val hexValue: String = Numeric.toHexString(signedMessage)
+                val ethSendTransaction: EthSendTransaction = web3.ethSendRawTransaction(hexValue).send()
+                val message = if (ethSendTransaction.error != null) {
+                    "Tx Error: ${ethSendTransaction.error.message}"
+                } else {
+                    "Tx Hash: ${ethSendTransaction.transactionHash}"
+                }
+                Log.d(TAG, message)
+                runOnUiThread { showResult(message) }
+            } catch (e: Exception) {
+                Log.e(TAG, "sendTransaction failed", e)
+                runOnUiThread { showResult(e.message ?: "Transaction failed") }
+            }
         }
     }
 
     private fun reRender() {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runOnUiThread { reRender() }
+            return
+        }
+        web3Auth.getUserInfoAsync().whenComplete { userInfo, _ ->
+            runOnUiThread { renderSession(userInfo) }
+        }
+    }
+
+    private fun renderSession(userInfo: UserInfo?) {
         val contentTextView = findViewById<TextView>(R.id.contentTextView)
         val signInButton = findViewById<Button>(R.id.signInButton)
         val signOutButton = findViewById<Button>(R.id.signOutButton)
@@ -395,41 +440,34 @@ class MainActivity : AppCompatActivity() {
         val getBalanceButton = findViewById<Button>(R.id.getBalance)
         val getMessageButton = findViewById<Button>(R.id.getMessage)
         val getTransactionButton = findViewById<Button>(R.id.getTransaction)
-        val getEnableMFAButton = findViewById<Button>(R.id.enableMFA)
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
         val getLaunchWalletServicesButton = findViewById<Button>(R.id.launchWalletServices)
 
-
-        var key: String? = null
-        var userInfo: UserInfo? = null
-        try {
-            key = web3Auth.getPrivateKey()
-            userInfo = web3Auth.getUserInfo()
+        val key = try {
+            web3Auth.getPrivateKey()
         } catch (ex: Exception) {
-            print(ex)
+            Log.d(TAG, ex.message ?: "No private key")
+            ""
         }
-        println(userInfo)
-        if (key is String && key.isNotEmpty()) {
+        val loggedIn = key.isNotEmpty()
+        if (loggedIn) {
             contentTextView.text = gson.toJson(userInfo) + "\n Private Key: " + key
             contentTextView.visibility = View.VISIBLE
             signInButton.visibility = View.GONE
-            signOutButton.visibility = View.VISIBLE
-            getAddressButton.visibility = View.VISIBLE
-            getBalanceButton.visibility = View.VISIBLE
-            getMessageButton.visibility = View.VISIBLE
-            getTransactionButton.visibility = View.VISIBLE
-            getEnableMFAButton.visibility = View.VISIBLE
-            getLaunchWalletServicesButton.visibility = View.VISIBLE
         } else {
             contentTextView.text = getString(R.string.not_logged_in)
             contentTextView.visibility = View.GONE
             signInButton.visibility = View.VISIBLE
-            signOutButton.visibility = View.GONE
-            getAddressButton.visibility = View.GONE
-            getBalanceButton.visibility = View.GONE
-            getMessageButton.visibility = View.GONE
-            getTransactionButton.visibility = View.GONE
-            getEnableMFAButton.visibility = View.GONE
-            getLaunchWalletServicesButton.visibility = View.GONE
         }
+        val sessionVisibility = if (loggedIn) View.VISIBLE else View.GONE
+        signOutButton.visibility = sessionVisibility
+        getAddressButton.visibility = sessionVisibility
+        getBalanceButton.visibility = sessionVisibility
+        getMessageButton.visibility = sessionVisibility
+        getTransactionButton.visibility = sessionVisibility
+        getAccessTokenButton.visibility = sessionVisibility
+        refreshSessionButton.visibility = sessionVisibility
+        getLaunchWalletServicesButton.visibility = sessionVisibility
     }
 }

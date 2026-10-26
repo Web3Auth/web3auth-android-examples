@@ -22,12 +22,16 @@ class Web3AuthHelperImpl(
         return web3Auth.getEd25519PrivateKey()
     }
 
-    override fun getUserInfo(): UserInfo {
-      try {
-          return web3Auth.getUserInfo()!!
-      } catch (e: Exception) {
-          throw e
-      }
+    override fun getUserInfoAsync(): CompletableFuture<UserInfo> {
+        return web3Auth.getUserInfoAsync()
+    }
+
+    override fun getAccessToken(): CompletableFuture<String> {
+        return web3Auth.getAccessToken()
+    }
+
+    override fun refreshSession(): CompletableFuture<Web3AuthResponse> {
+        return web3Auth.refreshSession()
     }
 
     override suspend fun initialize(): CompletableFuture<Void> {

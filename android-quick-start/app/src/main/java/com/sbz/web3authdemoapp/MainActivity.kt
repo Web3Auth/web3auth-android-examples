@@ -11,8 +11,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
+import com.google.gson.JsonArray
 // IMP START - Quick Start
 import com.web3auth.core.Web3Auth
+import com.web3auth.core.isEmailValid
 // IMP END - Quick Start
 import com.web3auth.core.types.*
 import org.torusresearch.fetchnodedetails.types.Web3AuthNetwork
@@ -33,7 +35,6 @@ import org.web3j.utils.Numeric
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CompletableFuture
-import kotlin.math.log
 
 
 class MainActivity : AppCompatActivity() {
@@ -54,8 +55,11 @@ class MainActivity : AppCompatActivity() {
         web3Auth = Web3Auth(
             Web3AuthOptions(
                 clientId = getString(R.string.web3auth_project_id),
-                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET, // pass over the network you want to use
+                web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET,
+                // Sapphire Mainnet client IDs must use PRODUCTION. TESTING hits develop-auth.
+                authBuildEnv = BuildEnv.PRODUCTION,
                 redirectUrl = "com.sbz.web3authdemoapp://auth"
+                // Leave sessionTime unset so initialize() hydrates it from the dashboard.
             ), this
         )
         // IMP END - Initialize Web3Auth
@@ -69,7 +73,11 @@ class MainActivity : AppCompatActivity() {
                 reRender()
                 println("PrivKey: " + web3Auth.getPrivateKey())
                 println("ed25519PrivKey: " + web3Auth.getEd25519PrivateKey())
-                println("Web3Auth UserInfo" + web3Auth.getUserInfo())
+                web3Auth.getUserInfoAsync().whenComplete { info, infoError ->
+                    if (infoError == null) {
+                        Log.d("MainActivity_Web3Auth", "idToken present=${info?.idToken?.isNotBlank() == true}")
+                    }
+                }
                 credentials = Credentials.create(web3Auth.getPrivateKey())
                 web3 = Web3j.build(HttpService(rpcUrl))
             } else {
@@ -103,6 +111,18 @@ class MainActivity : AppCompatActivity() {
         val getTransactionButton = findViewById<Button>(R.id.getTransaction)
         getTransactionButton.setOnClickListener { sendTransaction(0.001, "0xeaA8Af602b2eDE45922818AE5f9f7FdE50cFa1A8") }
         getTransactionButton.visibility = View.GONE
+
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        getAccessTokenButton.setOnClickListener { getAccessToken() }
+        getAccessTokenButton.visibility = View.GONE
+
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
+        refreshSessionButton.setOnClickListener { refreshSession() }
+        refreshSessionButton.visibility = View.GONE
+
+        val walletSignButton = findViewById<Button>(R.id.walletSign)
+        walletSignButton.setOnClickListener { walletPersonalSign() }
+        walletSignButton.visibility = View.GONE
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -123,10 +143,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun signIn() {
         val email = emailInput.text.toString()
+        if (email.isBlank() || !email.isEmailValid()) {
+            Toast.makeText(this, "Please enter a valid email.", Toast.LENGTH_LONG).show()
+            return
+        }
         // IMP START - Login
         val selectedLoginProvider = AuthConnection.EMAIL_PASSWORDLESS   // Can be GOOGLE, FACEBOOK, TWITCH etc.
         val loginParams = LoginParams(
             selectedLoginProvider,
+            extraLoginOptions = ExtraLoginOptions(login_hint = email),
             loginHint = email
         )
         val loginCompletableFuture: CompletableFuture<Web3AuthResponse> =
@@ -151,10 +176,7 @@ class MainActivity : AppCompatActivity() {
         val logoutCompletableFuture = web3Auth.logout()
         // IMP END - Logout
         logoutCompletableFuture.whenComplete { _, error ->
-
             if (error == null) {
-                val user = web3Auth.getUserInfo()
-                Log.i("UserInfo", user.toString())
                 reRender()
             } else {
                 Log.d("MainActivity_Web3Auth", error.message ?: "Something went wrong")
@@ -163,7 +185,71 @@ class MainActivity : AppCompatActivity() {
         recreate()
     }
 
+    private fun getAccessToken() {
+        web3Auth.getAccessToken().whenComplete { token, error ->
+            runOnUiThread {
+                val contentTextView = findViewById<TextView>(R.id.contentTextView)
+                contentTextView.visibility = View.VISIBLE
+                contentTextView.text = if (error == null) {
+                    "Access token:\n$token"
+                } else {
+                    error.message ?: "Unable to get access token"
+                }
+            }
+        }
+    }
+
+    private fun refreshSession() {
+        web3Auth.refreshSession().whenComplete { _, error ->
+            runOnUiThread {
+                if (error == null) {
+                    credentials = Credentials.create(web3Auth.getPrivateKey())
+                    web3 = Web3j.build(HttpService(rpcUrl))
+                    reRender()
+                } else {
+                    Log.d("MainActivity_Web3Auth", error.message ?: "Unable to refresh session")
+                    val contentTextView = findViewById<TextView>(R.id.contentTextView)
+                    contentTextView.visibility = View.VISIBLE
+                    contentTextView.text = error.message ?: "Unable to refresh session"
+                }
+            }
+        }
+    }
+
+    private fun walletPersonalSign() {
+        if (!::credentials.isInitialized) return
+        val params = JsonArray().apply {
+            add("Hello, Web3Auth from Android!")
+            add(credentials.address)
+            add("Android")
+        }
+        web3Auth.request("personal_sign", requestParams = params, appState = "web3auth")
+            .whenComplete { signResult, error ->
+                runOnUiThread {
+                    val contentTextView = findViewById<TextView>(R.id.contentTextView)
+                    contentTextView.visibility = View.VISIBLE
+                    contentTextView.text = if (error == null) {
+                        signResult.toString()
+                    } else {
+                        error.message ?: "Wallet sign failed"
+                    }
+                }
+            }
+    }
+
     private fun reRender() {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            runOnUiThread { reRender() }
+            return
+        }
+        // IMP START - Get User Info
+        web3Auth.getUserInfoAsync().whenComplete { userInfo, _ ->
+            runOnUiThread { renderSession(userInfo) }
+        }
+        // IMP END - Get User Info
+    }
+
+    private fun renderSession(userInfo: UserInfo?) {
         val contentTextView = findViewById<TextView>(R.id.contentTextView)
         val signInButton = findViewById<Button>(R.id.signInButton)
         val signOutButton = findViewById<Button>(R.id.signOutButton)
@@ -171,41 +257,36 @@ class MainActivity : AppCompatActivity() {
         val getBalanceButton = findViewById<Button>(R.id.getBalance)
         val getMessageButton = findViewById<Button>(R.id.getMessage)
         val getTransactionButton = findViewById<Button>(R.id.getTransaction)
+        val getAccessTokenButton = findViewById<Button>(R.id.getAccessToken)
+        val refreshSessionButton = findViewById<Button>(R.id.refreshSession)
+        val walletSignButton = findViewById<Button>(R.id.walletSign)
         emailInput = findViewById(R.id.emailInput)
 
-
-
-        var key: String? = null
-        var userInfo: UserInfo? = null
-        try {
-            key = web3Auth.getPrivateKey()
-            // IMP START - Get User Info
-            userInfo = web3Auth.getUserInfo()
-            // IMP END - Get User Info
+        val key = try {
+            web3Auth.getPrivateKey()
         } catch (ex: Exception) {
-            print(ex)
+            Log.d("MainActivity_Web3Auth", ex.message ?: "No private key")
+            ""
         }
-        if (key is String && key.isNotEmpty()) {
+        val loggedIn = key.isNotEmpty()
+        if (loggedIn) {
             contentTextView.text = gson.toJson(userInfo) + "\n Private Key: " + key
             contentTextView.visibility = View.VISIBLE
             emailInput.visibility = View.GONE
             signInButton.visibility = View.GONE
-            signOutButton.visibility = View.VISIBLE
-            getAddressButton.visibility = View.VISIBLE
-            getBalanceButton.visibility = View.VISIBLE
-            getMessageButton.visibility = View.VISIBLE
-            getTransactionButton.visibility = View.VISIBLE
-
         } else {
             contentTextView.visibility = View.GONE
             emailInput.visibility = View.VISIBLE
             signInButton.visibility = View.VISIBLE
-            signOutButton.visibility = View.GONE
-            getAddressButton.visibility = View.GONE
-            getBalanceButton.visibility = View.GONE
-            getMessageButton.visibility = View.GONE
-            getTransactionButton.visibility = View.GONE
         }
+        signOutButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        getAddressButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        getBalanceButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        getMessageButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        getTransactionButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        getAccessTokenButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        refreshSessionButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        walletSignButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
     }
 
     // IMP START - Blockchain Calls

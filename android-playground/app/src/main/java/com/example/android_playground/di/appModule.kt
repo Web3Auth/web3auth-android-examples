@@ -8,6 +8,7 @@ import com.example.android_playground.domain.EthereumUseCase
 import com.example.android_playground.utils.chainConfigList
 import com.example.android_playground.viewmodel.MainViewModel
 import com.web3auth.core.Web3Auth
+import com.web3auth.core.types.BuildEnv
 import com.web3auth.core.types.Web3AuthOptions
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -31,6 +32,7 @@ private fun getWeb3AuthHelper(context: Context): Web3AuthHelper {
         Web3AuthOptions(
             clientId = "BPi5PB_UiIZ-cPz1GtV5i1I2iOSOHuimiXBI0e-Oe_u6X3oVAbCiAZOTEBtTXw4tsluTITPqA8zMsfxIKMjiqNQ",
             web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET,
+            authBuildEnv = BuildEnv.PRODUCTION,
             redirectUrl = "w3a://com.example.android_playground/auth"
         ), context.applicationContext
     )

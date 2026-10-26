@@ -46,7 +46,9 @@ private fun getWeb3AuthHelper(context: Context): Web3AuthHelper {
         defaultLanguage = Language.EN,
         mode = ThemeModes.LIGHT,
         useLogoLoader = true,
-        theme = hashMapOf("primary" to "#14F195")
+        theme = hashMapOf("primary" to "#14F195"),
+        tncLink = "https://web3auth.io/docs/legal/terms-and-conditions",
+        privacyPolicy = "https://web3auth.io/docs/legal/privacy-policy"
     )
 
     val authConnections = listOf(
@@ -62,7 +64,7 @@ private fun getWeb3AuthHelper(context: Context): Web3AuthHelper {
         Web3AuthOptions(
             clientId = Web3AuthSampleConfig.CLIENT_ID,
             web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET,
-            authBuildEnv = BuildEnv.TESTING,
+            authBuildEnv = BuildEnv.PRODUCTION,
             redirectUrl = Web3AuthSampleConfig.REDIRECT_URL,
             authConnectionConfig = authConnections,
             whiteLabel = whiteLabelData,

@@ -129,11 +129,36 @@ class MainViewModel(private val web3AuthHelper: Web3AuthHelper, private val sola
     }
 
     fun userInfo(onAvailable:(userInfo: UserInfo?, error: String?) -> Unit) {
-       try {
-           val info = web3AuthHelper.getUserInfo()
-           onAvailable(info,null)
-       } catch (e: Exception) {
-           e.localizedMessage?.let { onAvailable( null, it) }
-       }
+        viewModelScope.launch {
+            try {
+                val info = web3AuthHelper.getUserInfoAsync().await()
+                onAvailable(info, null)
+            } catch (e: Exception) {
+                e.localizedMessage?.let { onAvailable(null, it) }
+            }
+        }
+    }
+
+    fun fetchAccessToken(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                onResult(web3AuthHelper.getAccessToken().await())
+            } catch (e: Exception) {
+                onResult(e.message ?: "Unable to get access token")
+            }
+        }
+    }
+
+    fun refreshSession(onResult: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                web3AuthHelper.refreshSession().await()
+                prepareKeyPair()
+                _isLoggedIn.emit(true)
+                onResult("Session refreshed")
+            } catch (e: Exception) {
+                onResult(e.message ?: "Unable to refresh session")
+            }
+        }
     }
 }

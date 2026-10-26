@@ -39,15 +39,20 @@
             android:layout_marginBottom="16dp" />
     </ScrollView>
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/linearLayout"
         android:layout_width="310dp"
-        android:layout_height="372dp"
-        android:orientation="vertical"
+        android:layout_height="0dp"
+        android:fillViewport="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/scrollView2">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
         <Button
             android:id="@+id/getMessage"
@@ -74,11 +79,30 @@
             android:text="@string/send_transaction" />
 
         <Button
+            android:id="@+id/getAccessToken"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/get_access_token" />
+
+        <Button
+            android:id="@+id/refreshSession"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/refresh_session" />
+
+        <Button
+            android:id="@+id/walletSign"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/wallet_sign" />
+
+        <Button
             android:id="@+id/signOutButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/logout" />
     </LinearLayout>
+    </ScrollView>
 
     <EditText
         android:id="@+id/emailInput"

@@ -8,6 +8,7 @@ Android example demonstrating custom authentication with Auth0 using [MetaMask E
 - EVM wallet creation and management
 - Get wallet address, Sepolia balance, sign messages, and send transactions
 - Session persistence across app restarts
+- SDK 11 citadel session calls: `getUserInfoAsync()`, `getAccessToken()`, `refreshSession()`, `enableMFA()`, and `manageMFA()`
 
 ## Requirements
 

@@ -9,6 +9,7 @@ Android example demonstrating Solana blockchain integration with [MetaMask Embed
 - Get Solana wallet address (public key) and devnet SOL balance
 - Send SOL transactions on Solana Devnet
 - Session persistence across app restarts
+- SDK 11 citadel session calls: `getUserInfoAsync()`, `getAccessToken()`, and `refreshSession()`
 - MVVM architecture with Jetpack Compose UI
 
 ## Requirements
@@ -53,7 +54,7 @@ object Web3AuthSampleConfig {
 
 ```kotlin
 dependencies {
-    implementation("com.github.web3auth:web3auth-android-sdk:10.0.1")
+    implementation("com.github.web3auth:web3auth-android-sdk:11.0.0")
     implementation("org.sol4k:sol4k:0.4.1")
     implementation("io.insert-koin:koin-android:3.5.3")
 }

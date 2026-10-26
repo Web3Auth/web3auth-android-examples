@@ -233,7 +233,7 @@ fun AccountView(viewModel: MainViewModel,  onAddCustomChain: () -> Unit) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = viewModel.userInfo.name.first().uppercase(),
+                            text = viewModel.userInfo.name.ifBlank { "?" }.first().uppercase(),
                             style = Typography.headlineLarge.copy(color = Color.White)
                         )
                     }
@@ -263,6 +263,35 @@ fun AccountView(viewModel: MainViewModel,  onAddCustomChain: () -> Unit) {
                     openUserInfoDialog.value = true
                 }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
                     Text(text = "View user info")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.fetchAccessToken() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Get access token")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.refreshSession() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Refresh session")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.enableMfa() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Enable MFA")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.manageMfa() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Manage MFA")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.showWallet() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Show wallet")
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(onClick = { viewModel.walletPersonalSign() }, shape = RoundedCornerShape(4.dp), modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Wallet sign")
+                }
+                val sessionMessage = viewModel.sessionMessage.collectAsState().value
+                if (sessionMessage.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(text = sessionMessage, style = Typography.bodyMedium)
                 }
                 Box(modifier = Modifier.height(16.dp))
                 Row(

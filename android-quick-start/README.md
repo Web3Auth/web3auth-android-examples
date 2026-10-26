@@ -62,7 +62,7 @@ Add the SDK to your `app/build.gradle`:
 
 ```groovy
 dependencies {
-    implementation 'com.github.web3auth:web3auth-android-sdk:10.0.1'
+    implementation 'com.github.web3auth:web3auth-android-sdk:11.0.0'
 }
 ```
 
@@ -93,6 +93,7 @@ web3Auth = Web3Auth(
     Web3AuthOptions(
         clientId = getString(R.string.web3auth_project_id),
         web3AuthNetwork = Web3AuthNetwork.SAPPHIRE_MAINNET,
+        authBuildEnv = BuildEnv.PRODUCTION,
         redirectUrl = "com.sbz.web3authdemoapp://auth"
     ), this
 )
@@ -165,6 +166,22 @@ val ethBalance = Convert.fromWei(
     balanceResponse.balance.toBigDecimal(), Convert.Unit.ETHER
 )
 ```
+
+### Session
+
+After `initialize()` or `connectTo()` succeeds, citadel session calls are:
+
+```kotlin
+web3Auth.getUserInfoAsync().whenComplete { info, error ->
+    if (error == null) {
+        // info.idToken is backfilled from citadel when missing
+    }
+}
+web3Auth.getAccessToken()
+web3Auth.refreshSession()
+```
+
+`personal_sign` goes through Wallet Services with `web3Auth.request("personal_sign", requestParams, appState = "web3auth")`.
 
 ### Logout
 

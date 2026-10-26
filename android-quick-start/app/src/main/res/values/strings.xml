@@ -11,6 +11,9 @@
     <string name="balance">Balance</string>
     <string name="sign_message">Sign Message</string>
     <string name="send_transaction">Send Transaction</string>
+    <string name="get_access_token">Get Access Token</string>
+    <string name="refresh_session">Refresh Session</string>
+    <string name="wallet_sign">Wallet Sign</string>
     <string name="home">Home</string>
     <string name="email_hint">name@email.com</string>
 </resources>
